@@ -1,20 +1,46 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PsychonautWiki Journal</title>
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Psychonaut Journal</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="manifest" href="manifest.json">
 </head>
 <body>
-    <div class="container">
-        <h1>PsychonautWiki Journal</h1>
-        <p>Importe seu arquivo JSON para visualizar seus registros:</p>
-        
-        <input type="file" id="jsonInput" accept=".json">
-        <div id="output"></div>
-    </div>
+  <div class="app-container">
+    <header class="app-header">
+      <h1>Journal</h1>
+      <span class="badge">Privado</span>
+    </header>
 
-    <script src="app.js"></script>
+    <section class="import-section card">
+      <h2>Importar Histórico (v1.2 JSON)</h2>
+      <p>Selecione seu arquivo JSON exportado para carregar o histórico no aplicativo.</p>
+      <input type="file" id="jsonInput" accept=".json" class="file-input">
+      <button onclick="document.getElementById('jsonInput').click()" class="btn btn-primary">Carregar Arquivo JSON</button>
+      <button onclick="clearData()" class="btn btn-danger">Limpar Dados</button>
+    </section>
+
+    <section class="stats-section">
+      <div class="stat-card">
+        <span id="totalEntries" class="stat-value">0</span>
+        <span class="stat-label">Registros</span>
+      </div>
+      <div class="stat-card">
+        <span id="uniqueSubstances" class="stat-value">0</span>
+        <span class="stat-label">Substâncias</span>
+      </div>
+    </section>
+
+    <section class="timeline-section">
+      <h2>Linha do Tempo</h2>
+      <div id="timelineContainer" class="timeline-container">
+        <p class="empty-state">Nenhum registro encontrado. Importe um arquivo JSON acima.</p>
+      </div>
+    </section>
+  </div>
+
+  <script src="app.js"></script>
 </body>
 </html>
