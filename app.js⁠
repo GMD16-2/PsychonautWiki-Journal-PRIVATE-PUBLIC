@@ -1,0 +1,104 @@
+document.getElementById('jsonInput').addEventListener('change', handleFileSelect);
+
+// Inicializar dados salvos
+document.addEventListener('DOMContentLoaded', () => {
+  renderTimeline();
+});
+
+function handleFileSelect(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const rawData = JSON.parse(e.target.result);
+      const normalizedData = parseV12JSON(rawData);
+      
+      localStorage.setItem('journal_entries', JSON.stringify(normalizedData));
+      renderTimeline();
+      alert('Dados importados com sucesso!');
+    } catch (err) {
+      alert('Erro ao processar o arquivo JSON. Verifique o formato.');
+      console.error(err);
+    }
+  };
+  reader.readAsText(file);
+}
+
+// Normalização do esquema v1.2 para o esquema interno
+function parseV12JSON(data) {
+  let entries = [];
+  
+  if (Array.isArray(data)) {
+    entries = data;
+  } else if (data.entries && Array.isArray(data.entries)) {
+    entries = data.entries;
+  } else if (data.logs && Array.isArray(data.logs)) {
+    entries = data.logs;
+  }
+
+  return entries.map(item => ({
+    id: item.id || Date.now() + Math.random(),
+    substance: item.substance || item.name || item.substancia || 'Desconhecido',
+    dosage: item.dosage || item.dose || item.quantidade || 'N/A',
+    unit: item.unit || item.unidade || 'mg',
+    timestamp: item.timestamp || item.date || item.data || new Date().toISOString(),
+    notes: item.notes || item.comment || item.observacoes || ''
+  })).sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+}
+
+function renderTimeline() {
+  const rawStored = localStorage.getItem('journal_entries');
+  const container = document.getElementById('timelineContainer');
+  const totalEntriesEl = document.getElementById('totalEntries');
+  const uniqueSubstancesEl = document.getElementById('uniqueSubstances');
+
+  if (!rawStored) {
+    container.innerHTML = '<p class="empty-state">Nenhum registro encontrado. Importe um arquivo JSON acima.</p>';
+    totalEntriesEl.innerText = '0';
+    uniqueSubstancesEl.innerText = '0';
+    return;
+  }
+
+  const entries = JSON.parse(rawStored);
+  
+  // Atualizar Estatísticas
+  totalEntriesEl.innerText = entries.length;
+  const substancesSet = new Set(entries.map(e => e.substance.toLowerCase()));
+  uniqueSubstancesEl.innerText = substancesSet.size;
+
+  // Renderizar Itens
+  container.innerHTML = '';
+  entries.forEach(entry => {
+    const formattedDate = new Date(entry.timestamp).toLocaleString('pt-BR', {
+      dateStyle: 'medium',
+      timeStyle: 'short'
+    });
+
+    const itemHTML = `
+      <div class="timeline-item">
+        <div class="timeline-header">
+          <span class="substance-name">${escapeHTML(entry.substance)}</span>
+          <span class="dose-tag">${escapeHTML(entry.dosage)} ${escapeHTML(entry.unit)}</span>
+        </div>
+        <div class="timeline-time">${formattedDate}</div>
+        ${entry.notes ? `<div class="timeline-notes">${escapeHTML(entry.notes)}</div>` : ''}
+      </div>
+    `;
+    container.innerHTML += itemHTML;
+  });
+}
+
+function clearData() {
+  if (confirm('Tem certeza que deseja apagar todos os dados do aplicativo?')) {
+    localStorage.removeItem('journal_entries');
+    renderTimeline();
+  }
+}
+
+function escapeHTML(str) {
+  return String(str).replace(/[&<>"']/g, function(m) {
+    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m];
+  });
+}
